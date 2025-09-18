@@ -3,7 +3,10 @@ const app = express();
 const port = 3000;
 
 require("dotenv").config();
+const bcrypt = require("bcrypt");
 const { MongoClient, ServerApiVersion } = require("mongodb");
+
+app.use(express.json());
 
 // Add CORS middleware
 app.use((req, res, next) => {
@@ -34,14 +37,10 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get("/", (req, res) => {
-    res.send("Hello World!");
-});
-
-const uri = process.env.MONGODB_URI;
+const mongoDbUri = process.env.MONGODB_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
+const client = new MongoClient(mongoDbUri, {
     serverApi: {
         version: ServerApiVersion.v1,
         strict: true,
@@ -54,7 +53,7 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         // Send a ping to confirm a successful connection
-        await client.db("efrei-mycontacts").command({ ping: 1 });
+        await client.db("mycontacts-db").command({ ping: 1 });
         console.log(
             "Pinged your deployment. You successfully connected to MongoDB!"
         );
@@ -64,6 +63,67 @@ async function run() {
     }
 }
 run().catch(console.dir);
+
+app.get("/", (req, res) => {
+    res.send("Hello World!");
+});
+
+app.get("/health", (req, res) => {
+    res.send("Hello World!");
+});
+
+// Connect to the database and try adding a user to the "users" collection in the "mycontacts-db" database
+app.post("/auth/register", async (req, res) => {
+    const { email, password } = req.body;
+    let isEmailValid = true;
+
+    if (!email || !password) {
+        return res.status(400).json({
+            error: "Email and password are required to register a user.",
+        });
+    } else {
+        if (!email.includes("@")) {
+            return res.status(400).json({
+                error: "Email must be a valid email address.",
+            });
+        }
+
+        try {
+            await client.connect();
+            const db = client.db("mycontacts-db");
+            const user = await db.collection("users").find({ email }).toArray();
+            if (user.length > 0) {
+                isEmailValid = false;
+            }
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        } finally {
+            await client.close();
+        }
+
+        if (!isEmailValid) {
+            return res.status(400).json({
+                error: "Email already used.",
+            });
+        } else {
+            try {
+                const hashedPassword = await bcrypt.hash(password, 10);
+                await client.connect();
+                const db = client.db("mycontacts-db");
+                const result = await db.collection("users").insertOne({
+                    email,
+                    password: hashedPassword,
+                    createdAt: new Date(),
+                });
+                res.status(201).json({ insertedId: result.insertedId });
+            } catch (err) {
+                res.status(500).json({ error: err.message });
+            } finally {
+                await client.close();
+            }
+        }
+    }
+});
 
 app.use((req, res) => {
     return res.status(404).json({
