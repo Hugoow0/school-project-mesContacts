@@ -1,0 +1,18 @@
+services:
+    api:
+        build: .
+        environment:
+            - MONGODB_URI=${MONGODB_URI}
+            - JWT_SECRET=${JWT_SECRET}
+        ports:
+            - "5000:5000"
+    swagger:
+        image: swaggerapi/swagger-ui:latest
+        environment:
+            - SWAGGER_JSON=/openapi.yaml
+        volumes:
+            - ./openapi/openapi.yaml:/openapi.yaml:ro
+        ports:
+            - "8080:8080"
+        depends_on:
+            - api

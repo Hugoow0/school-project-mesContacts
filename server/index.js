@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 5000;
 
 require("dotenv").config();
 const bcrypt = require("bcrypt");
@@ -10,22 +10,32 @@ app.use(express.json());
 
 const requireAuth = require("./middleware").authenticateToken;
 
-// Add CORS middleware
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    );
-    res.header(
-        "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS"
-    );
-    if (req.method === "OPTIONS") {
-        return res.sendStatus(200);
-    }
-    next();
+const mongoDbUri = process.env.MONGODB_URI;
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(mongoDbUri, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    },
 });
+
+// Add CORS middleware
+const cors = require("cors");
+app.use(
+    cors({
+        origin: "*", // Or specify your frontend URL
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: [
+            "Origin",
+            "X-Requested-With",
+            "Content-Type",
+            "Accept",
+            "Authorization",
+        ],
+    })
+);
 // Logs every request
 app.use((req, res, next) => {
     const t0 = Date.now();
@@ -39,18 +49,11 @@ app.use((req, res, next) => {
     next();
 });
 
-const mongoDbUri = process.env.MONGODB_URI;
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(mongoDbUri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    },
+app.get("/", (req, res) => {
+    res.send("Hello World!");
 });
 
-async function run() {
+app.get("/health", async (req, res) => {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
@@ -59,19 +62,15 @@ async function run() {
         console.log(
             "Pinged your deployment. You successfully connected to MongoDB!"
         );
+        return res.status(200).json({ "api-status": "ok", "db-status": "ok" });
+    } catch (err) {
+        return res
+            .status(500)
+            .json({ status_api: "ok", status_db: "ko", error: err.message });
     } finally {
         // Ensures that the client will close when you finish/error
         await client.close();
     }
-}
-run().catch(console.dir);
-
-app.get("/", (req, res) => {
-    res.send("Hello World!");
-});
-
-app.get("/health", (req, res) => {
-    res.send("Hello World!");
 });
 
 // Connect to the database and try adding a user to the "users" collection in the "mycontacts-db" database
@@ -181,6 +180,6 @@ app.use((req, res) => {
     });
 });
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
     console.log(`Server listening on port ${port}`);
 });
