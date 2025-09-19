@@ -11,4 +11,8 @@ function authenticateToken(req, res, next) {
         next();
     });
 }
-module.exports = { authenticateToken };
+function getUserId(req) {
+    return req.user.id;
+}
+
+module.exports = { authenticateToken, getUserId };

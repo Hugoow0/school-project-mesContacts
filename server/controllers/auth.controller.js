@@ -7,7 +7,7 @@ const User = require("../models/user.model");
 const register = async (req, res) => {
     const { email, password } = req.body;
     let isEmailAvailable = true;
-    if (!validator.validateForm(email, password)) {
+    if (!email || !password) {
         return res.status(400).json({
             error: "Email and password are required to register a user.",
         });
@@ -25,7 +25,7 @@ const register = async (req, res) => {
 
     try {
         await client.connect();
-        const db = client.db("mycontacts-db");
+        const db = client.db(process.env.MONGODB_DBNAME);
         const user = await db.collection("users").find({ email }).toArray();
         if (user.length > 0) {
             isEmailAvailable = false;
@@ -48,7 +48,7 @@ const register = async (req, res) => {
                 password: hashedPassword,
             });
             await client.connect();
-            const db = client.db("mycontacts-db");
+            const db = client.db(process.env.MONGODB_DBNAME);
             const result = await db.collection("users").insertOne(newUser);
             res.status(201).json({ insertedId: result.insertedId });
         } catch (err) {
@@ -68,7 +68,7 @@ const login = async (req, res) => {
     } else {
         try {
             await client.connect();
-            const db = client.db("mycontacts-db");
+            const db = client.db(process.env.MONGODB_DBNAME);
             const user = await db.collection("users").find({ email }).toArray();
             if (user.length === 0) {
                 return res.status(400).json({
@@ -86,7 +86,7 @@ const login = async (req, res) => {
                 } else {
                     // Create JWT token
                     const token = jwt.sign(
-                        { email: user[0].email, id: user[0]._id },
+                        { id: user[0]._id, email: user[0].email },
                         process.env.JWT_SECRET,
                         { expiresIn: "1h" }
                     );
