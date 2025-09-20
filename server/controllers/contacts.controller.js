@@ -4,11 +4,8 @@ const Contact = require("../models/contact.model");
 
 const middleware = require("../middlewares/middleware");
 
-const getContactsByUser = async (req, res) => {
+const getContacts = async (req, res) => {
     const userId = middleware.getUserId(req);
-    if (!userId) {
-        return res.status(401).json({ error: "User ID not found in token" });
-    }
     try {
         await client.connect();
         const db = client.db(process.env.MONGODB_DBNAME);
@@ -27,10 +24,6 @@ const getContactsByUser = async (req, res) => {
 const postContact = async (req, res) => {
     const userId = middleware.getUserId(req);
     const { firstName, lastName, phone } = req.body;
-
-    if (!userId) {
-        return res.status(401).json({ error: "User ID not found in token" });
-    }
 
     if (!firstName || !lastName || !phone) {
         return res.status(400).json({
@@ -69,11 +62,8 @@ const postContact = async (req, res) => {
 const patchContact = async (req, res) => {
     const userId = middleware.getUserId(req);
     const contactId = req.params.id;
-    const { firstName, lastName, phone } = req.body;
+    const { firstName, lastName, phone } = req.body ? req.body : {};
 
-    if (!userId) {
-        return res.status(401).json({ error: "User ID not found in token" });
-    }
     if (!contactId) {
         return res.status(400).json({ error: "Contact ID is required." });
     }
@@ -110,13 +100,16 @@ const patchContact = async (req, res) => {
             .collection("contacts")
             .find({ userId })
             .toArray();
-        console.log("Before update:", userContacts[0]);
+        let contactFound = false;
         for (let contact of userContacts[0].contacts) {
             if (contact._id.toString() === contactId) {
                 Object.assign(contact, updatedFields);
+                contactFound = true;
             }
         }
-        console.log("After update:", userContacts[0]);
+        if (!contactFound) {
+            return res.status(404).json({ error: "Contact not found." });
+        }
         await db
             .collection("contacts")
             .updateOne(
@@ -125,7 +118,7 @@ const patchContact = async (req, res) => {
             );
         res.status(200).json({
             message: "Contact updated successfully.",
-            updatedContact: updatedFields,
+            updatedContactId: contactId,
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -134,10 +127,53 @@ const patchContact = async (req, res) => {
     }
 };
 
-//TODO: deleteContact function
+const deleteContact = async (req, res) => {
+    const userId = middleware.getUserId(req);
+    const contactId = req.params.id;
+
+    if (!contactId) {
+        return res.status(400).json({ error: "Contact ID is required." });
+    }
+
+    try {
+        await client.connect();
+        const db = client.db(process.env.MONGODB_DBNAME);
+        userContacts = await db
+            .collection("contacts")
+            .find({ userId })
+            .toArray();
+        let contactFound = false;
+        for (let index = 0; index < userContacts[0].contacts.length; index++) {
+            let contact = userContacts[0].contacts[index];
+            if (contact._id.toString() === contactId) {
+                userContacts[0].contacts.splice(index, 1);
+                contactFound = true;
+                break;
+            }
+        }
+        if (!contactFound) {
+            return res.status(404).json({ error: "Contact not found." });
+        }
+        await db
+            .collection("contacts")
+            .updateOne(
+                { userId },
+                { $set: { contacts: userContacts[0].contacts } }
+            );
+        res.status(200).json({
+            message: "Contact deleted successfully.",
+            deletedContact: contactId,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    } finally {
+        await client.close();
+    }
+};
 
 module.exports = {
-    getContactsByUser,
+    getContacts,
     postContact,
     patchContact,
+    deleteContact,
 };

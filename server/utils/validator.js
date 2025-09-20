@@ -8,7 +8,7 @@ const validatePassword = (password) => {
 };
 
 const validatePhone = (phone) => {
-    return phone.length <= 10;
+    return phone.length >= 10;
 };
 
 module.exports = {
