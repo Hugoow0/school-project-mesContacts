@@ -7,10 +7,10 @@ const requireAuth = require("../middlewares/middleware").authenticateToken;
 const contactsController = require("../controllers/contacts.controller");
 
 // Use controllers in routes
-router.get("/", requireAuth, contactsController.getContactsOfUser);
-router.post("/", requireAuth, contactsController.postContactsOfUser);
+router.get("/", requireAuth, contactsController.getContactsByUser);
+router.post("/", requireAuth, contactsController.postContact);
+router.patch("/:id", requireAuth, contactsController.patchContact);
 /*
-router.patch("/:id", requireAuth, contactsController.updateContact);
-router.delete("/:id", requireAuth, contactsController.protectedRoute);
+router.delete("/:id", requireAuth, contactsController.deleteContact);
 */
 module.exports = router;
