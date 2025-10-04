@@ -8,6 +8,7 @@ const contactsController = require("../controllers/contacts.controller");
 
 // Use controllers in routes
 router.get("/", requireAuth, contactsController.getContacts);
+router.get("/:id", requireAuth, contactsController.getContactById);
 router.post("/", requireAuth, contactsController.postContact);
 router.patch("/:id", requireAuth, contactsController.patchContact);
 router.delete("/:id", requireAuth, contactsController.deleteContact);

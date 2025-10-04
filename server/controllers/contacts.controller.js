@@ -21,6 +21,40 @@ const getContacts = async (req, res) => {
     }
 };
 
+const getContactById = async (req, res) => {
+    const userId = middleware.getUserId(req);
+    const contactId = req.params.id;
+
+    if (!contactId) {
+        return res.status(400).json({ error: "Contact ID is required." });
+    }
+
+    try {
+        await client.connect();
+        const db = client.db(process.env.MONGODB_DBNAME);
+        const userContacts = await db
+            .collection("contacts")
+            .find({ userId })
+            .toArray();
+
+        if (userContacts.length === 0) {
+            return res.status(404).json({ error: "User contacts not found." });
+        }
+        const contact = userContacts[0].contacts.find(
+            (contact) => contact._id.toString() === contactId
+        );
+        if (!contact) {
+            return res.status(404).json({ error: "Contact not found." });
+        }
+
+        res.status(200).json(contact);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    } finally {
+        await client.close();
+    }
+};
+
 const postContact = async (req, res) => {
     const userId = middleware.getUserId(req);
     const { firstName, lastName, phone } = req.body;
@@ -173,6 +207,7 @@ const deleteContact = async (req, res) => {
 
 module.exports = {
     getContacts,
+    getContactById,
     postContact,
     patchContact,
     deleteContact,
