@@ -49,7 +49,19 @@ const register = async (req, res) => {
             });
             await client.connect();
             const db = client.db(process.env.MONGODB_DBNAME);
-            await db.collection("users").insertOne(newUser);
+            // Insert the user first
+            const userResult = await db.collection("users").insertOne(newUser);
+            const userId = userResult.insertedId;
+
+            // Create the contacts document for the new user
+            const userContacts = {
+                userId: userId.toString(),
+                contacts: [],
+            };
+
+            // Insert the contacts document
+            await db.collection("contacts").insertOne(userContacts);
+
             res.status(201).json({ message: "User created successfully" });
         } catch (err) {
             res.status(500).json({ error: err.message });
@@ -91,7 +103,7 @@ const login = async (req, res) => {
                         { expiresIn: "1h" }
                     );
                     return res.status(200).json({
-                        message: "Login successful.",
+                        message: "Logged in successfully.",
                         token,
                     });
                 }
