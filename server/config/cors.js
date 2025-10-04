@@ -2,7 +2,7 @@
 const cors = require("cors");
 const corsOptions = cors({
     origin: "*", // Or specify your frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
         "Origin",
         "X-Requested-With",
