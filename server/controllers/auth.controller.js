@@ -49,8 +49,8 @@ const register = async (req, res) => {
             });
             await client.connect();
             const db = client.db(process.env.MONGODB_DBNAME);
-            const result = await db.collection("users").insertOne(newUser);
-            res.status(201).json({ insertedId: result.insertedId });
+            await db.collection("users").insertOne(newUser);
+            res.status(201).json({ message: "User created successfully" });
         } catch (err) {
             res.status(500).json({ error: err.message });
         } finally {
@@ -72,7 +72,7 @@ const login = async (req, res) => {
             const user = await db.collection("users").find({ email }).toArray();
             if (user.length === 0) {
                 return res.status(400).json({
-                    error: "No user found with this email.",
+                    error: "Invalid credentials.",
                 });
             } else {
                 const isPasswordValid = await bcrypt.compare(
@@ -81,7 +81,7 @@ const login = async (req, res) => {
                 );
                 if (!isPasswordValid) {
                     return res.status(400).json({
-                        error: "Invalid password.",
+                        error: "Invalid credentials.",
                     });
                 } else {
                     // Create JWT token
@@ -104,12 +104,7 @@ const login = async (req, res) => {
     }
 };
 
-const protectedRoute = (req, res) => {
-    return res.status(200).json({ message: "This is a protected route" });
-};
-
 module.exports = {
     register,
     login,
-    protectedRoute,
 };

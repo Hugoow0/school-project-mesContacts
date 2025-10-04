@@ -1,0 +1,637 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "MesContacts API",
+        "version": "1.0.0",
+        "description": "API for managing contacts with user authentication"
+    },
+    "servers": [{ "url": "http://localhost:5000" }],
+    "paths": {
+        "/api": {
+            "get": {
+                "summary": "Welcome endpoint",
+                "description": "Returns a welcome message",
+                "responses": {
+                    "200": {
+                        "description": "Hello World",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/health": {
+            "get": {
+                "summary": "Health check (API + DB)",
+                "description": "Check the health status of the API and database connection",
+                "responses": {
+                    "200": {
+                        "description": "API and DB are healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "api-status": {
+                                            "type": "string"
+                                        },
+                                        "db-status": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Database connection error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status_api": {
+                                            "type": "string"
+                                        },
+                                        "status_db": {
+                                            "type": "string"
+                                        },
+                                        "error": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/register": {
+            "post": {
+                "summary": "Register a new user",
+                "description": "Create a new user account with email and password",
+                "tags": ["Authentication"],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["email", "password"],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "description": "User's email address"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 6,
+                                        "description": "User's password (minimum 6 characters)"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "insertedId": {
+                                            "type": "string",
+                                            "description": "The ID of the newly created user"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input or email already used",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "summary": "Login a user",
+                "description": "Authenticate user with email and password, returns JWT token",
+                "tags": ["Authentication"],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["email", "password"],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "description": "User's email address"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "description": "User's password"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "description": "JWT token for authentication"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/protected": {
+            "get": {
+                "summary": "Protected route example",
+                "description": "Example endpoint that requires JWT authentication",
+                "tags": ["Authentication"],
+                "security": [{ "bearerAuth": [] }],
+                "responses": {
+                    "200": {
+                        "description": "Access granted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized (missing or invalid token)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/contacts": {
+            "get": {
+                "summary": "Get all contacts for authenticated user",
+                "description": "Retrieve all contacts belonging to the authenticated user",
+                "tags": ["Contacts"],
+                "security": [{ "bearerAuth": [] }],
+                "responses": {
+                    "200": {
+                        "description": "List of contacts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Contact"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create a new contact",
+                "description": "Create a new contact for the authenticated user",
+                "tags": ["Contacts"],
+                "security": [{ "bearerAuth": [] }],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Contact created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "insertedId": {
+                                            "type": "string",
+                                            "description": "The ID of the created contact"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/contacts/{id}": {
+            "get": {
+                "summary": "Get a specific contact by ID",
+                "description": "Retrieve a specific contact by its ID for the authenticated user",
+                "tags": ["Contacts"],
+                "security": [{ "bearerAuth": [] }],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9a-fA-F]{24}$"
+                        },
+                        "description": "Contact ID (MongoDB ObjectId)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Contact"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Contact not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update a contact by ID",
+                "description": "Update an existing contact by its ID for the authenticated user",
+                "tags": ["Contacts"],
+                "security": [{ "bearerAuth": [] }],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9a-fA-F]{24}$"
+                        },
+                        "description": "Contact ID (MongoDB ObjectId)"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactInput"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contact updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "modifiedCount": {
+                                            "type": "number"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Contact not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete a contact by ID",
+                "description": "Delete a contact by its ID for the authenticated user",
+                "tags": ["Contacts"],
+                "security": [{ "bearerAuth": [] }],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^[0-9a-fA-F]{24}$"
+                        },
+                        "description": "Contact ID (MongoDB ObjectId)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "deletedCount": {
+                                            "type": "number"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Contact not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Enter JWT token in format: Bearer <token>"
+            }
+        },
+        "schemas": {
+            "Contact": {
+                "type": "object",
+                "properties": {
+                    "_id": {
+                        "type": "string",
+                        "description": "Contact unique identifier"
+                    },
+                    "firstName": {
+                        "type": "string",
+                        "description": "Contact's first name"
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "description": "Contact's last name"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "Contact's phone number"
+                    }
+                }
+            },
+            "ContactInput": {
+                "type": "object",
+                "required": ["firstName", "lastName"],
+                "properties": {
+                    "firstName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Contact's first name"
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Contact's last name"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "minLength": 10,
+                        "description": "Contact's phone number"
+                    }
+                }
+            },
+            "Error": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string",
+                        "description": "Error message"
+                    }
+                }
+            }
+        }
+    }
+}
