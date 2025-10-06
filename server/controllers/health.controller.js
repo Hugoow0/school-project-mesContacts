@@ -1,11 +1,10 @@
-const client = require("../config/db");
+const { getDatabase } = require("../config/db");
 
 const healthCheck = async (req, res) => {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        const db = await getDatabase();
         // Send a ping to confirm a successful connection
-        await client.db("mycontacts-db").command({ ping: 1 });
+        await db.command({ ping: 1 });
         console.log(
             "Pinged your deployment. You successfully connected to MongoDB!"
         );
@@ -14,9 +13,6 @@ const healthCheck = async (req, res) => {
         return res
             .status(500)
             .json({ status_api: "ok", status_db: "ko", error: err.message });
-    } finally {
-        // Ensures that the client will close when you finish/error
-        await client.close();
     }
 };
 
