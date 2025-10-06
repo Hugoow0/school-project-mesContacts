@@ -1,14 +1,32 @@
 const { MongoClient, ServerApiVersion } = require("mongodb");
 
-const mongoDbUri = process.env.MONGODB_URI;
+let client = null;
+let db = null;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(mongoDbUri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    },
-});
+const getDatabase = async () => {
+    if (db) return db; // Reuse existing connection
 
-module.exports = client;
+    try {
+        if (!client) {
+            client = new MongoClient(process.env.MONGODB_URI, {
+                serverApi: {
+                    version: ServerApiVersion.v1,
+                    strict: true,
+                    deprecationErrors: true,
+                },
+                maxPoolSize: 10,
+                serverSelectionTimeoutMS: 5000,
+                socketTimeoutMS: 45000,
+            });
+        }
+
+        await client.connect();
+        db = client.db(process.env.MONGODB_DBNAME);
+        return db;
+    } catch (error) {
+        console.error("Database connection error:", error);
+        throw error;
+    }
+};
+
+module.exports = { getDatabase };

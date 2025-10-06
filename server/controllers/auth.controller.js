@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const client = require("../config/db");
+const { getDatabase } = require("../config/db");
 const validator = require("../utils/validator");
 const User = require("../models/user.model");
 
@@ -24,16 +24,13 @@ const register = async (req, res) => {
     }
 
     try {
-        await client.connect();
-        const db = client.db(process.env.MONGODB_DBNAME);
-        const user = await db.collection("users").find({ email }).toArray();
-        if (user.length > 0) {
+        const db = await getDatabase();
+        const user = await db.collection("users").findOne({ email });
+        if (user) {
             isEmailAvailable = false;
         }
     } catch (err) {
-        res.status(500).json({ error: err.message });
-    } finally {
-        await client.close();
+        return res.status(500).json({ error: err.message });
     }
 
     if (!isEmailAvailable) {
@@ -47,8 +44,7 @@ const register = async (req, res) => {
                 email: email,
                 password: hashedPassword,
             });
-            await client.connect();
-            const db = client.db(process.env.MONGODB_DBNAME);
+            const db = await getDatabase();
             // Insert the user first
             const userResult = await db.collection("users").insertOne(newUser);
             const userId = userResult.insertedId;
@@ -65,8 +61,6 @@ const register = async (req, res) => {
             res.status(201).json({ message: "User created successfully" });
         } catch (err) {
             res.status(500).json({ error: err.message });
-        } finally {
-            await client.close();
         }
     }
 };
@@ -79,17 +73,17 @@ const login = async (req, res) => {
         });
     } else {
         try {
-            await client.connect();
-            const db = client.db(process.env.MONGODB_DBNAME);
-            const user = await db.collection("users").find({ email }).toArray();
-            if (user.length === 0) {
+            const db = await getDatabase();
+            const user = await db.collection("users").findOne({ email });
+            if (!user) {
+                // Changed this line
                 return res.status(400).json({
                     error: "Invalid credentials.",
                 });
             } else {
                 const isPasswordValid = await bcrypt.compare(
                     password,
-                    user[0].password
+                    user.password
                 );
                 if (!isPasswordValid) {
                     return res.status(400).json({
@@ -98,7 +92,7 @@ const login = async (req, res) => {
                 } else {
                     // Create JWT token
                     const token = jwt.sign(
-                        { id: user[0]._id, email: user[0].email },
+                        { id: user._id, email: user.email },
                         process.env.JWT_SECRET,
                         { expiresIn: "1h" }
                     );
@@ -110,8 +104,6 @@ const login = async (req, res) => {
             }
         } catch (err) {
             res.status(500).json({ error: err.message });
-        } finally {
-            await client.close();
         }
     }
 };

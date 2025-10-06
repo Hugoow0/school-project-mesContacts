@@ -1,4 +1,4 @@
-const client = require("../config/db");
+const { getDatabase } = require("../config/db");
 const validator = require("../utils/validator");
 const Contact = require("../models/contact.model");
 
@@ -7,8 +7,7 @@ const middleware = require("../middlewares/middleware");
 const getContacts = async (req, res) => {
     const userId = middleware.getUserId(req);
     try {
-        await client.connect();
-        const db = client.db(process.env.MONGODB_DBNAME);
+        const db = await getDatabase();
         const contacts = await db
             .collection("contacts")
             .find({ userId })
@@ -16,8 +15,6 @@ const getContacts = async (req, res) => {
         res.status(200).json(contacts);
     } catch (err) {
         res.status(500).json({ error: err.message });
-    } finally {
-        await client.close();
     }
 };
 
@@ -30,8 +27,7 @@ const getContactById = async (req, res) => {
     }
 
     try {
-        await client.connect();
-        const db = client.db(process.env.MONGODB_DBNAME);
+        const db = await getDatabase();
         const userContacts = await db
             .collection("contacts")
             .find({ userId })
@@ -50,8 +46,6 @@ const getContactById = async (req, res) => {
         res.status(200).json(contact);
     } catch (err) {
         res.status(500).json({ error: err.message });
-    } finally {
-        await client.close();
     }
 };
 
@@ -76,8 +70,7 @@ const postContact = async (req, res) => {
         });
 
         try {
-            await client.connect();
-            const db = client.db(process.env.MONGODB_DBNAME);
+            const db = await getDatabase();
             userContacts = await db
                 .collection("contacts")
                 .updateOne({ userId }, { $push: { contacts: newContact } });
@@ -87,8 +80,6 @@ const postContact = async (req, res) => {
             });
         } catch (err) {
             res.status(500).json({ error: err.message });
-        } finally {
-            await client.close();
         }
     }
 };
@@ -128,8 +119,7 @@ const patchContact = async (req, res) => {
         });
     }
     try {
-        await client.connect();
-        const db = client.db(process.env.MONGODB_DBNAME);
+        const db = await getDatabase();
         userContacts = await db
             .collection("contacts")
             .find({ userId })
@@ -156,8 +146,6 @@ const patchContact = async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
-    } finally {
-        await client.close();
     }
 };
 
@@ -170,8 +158,7 @@ const deleteContact = async (req, res) => {
     }
 
     try {
-        await client.connect();
-        const db = client.db(process.env.MONGODB_DBNAME);
+        const db = await getDatabase();
         userContacts = await db
             .collection("contacts")
             .find({ userId })
@@ -200,8 +187,6 @@ const deleteContact = async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
-    } finally {
-        await client.close();
     }
 };
 
