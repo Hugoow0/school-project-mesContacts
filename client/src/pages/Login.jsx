@@ -29,7 +29,7 @@ export default function LoginPage() {
         //TODO: replace url by .env variable
         try {
             const response = await fetch(
-                "https://school-project-mes-contacts-backend.vercel.app/api/auth/login",
+                `${import.meta.env.VITE_API_URL}/api/auth/login`,
                 {
                     method: "POST",
                     headers: {

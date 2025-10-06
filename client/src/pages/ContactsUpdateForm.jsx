@@ -16,7 +16,7 @@ export default function ContactsUpdatePage() {
             setLoading(true);
             //TODO: replace url by .env variable
             const response = await authenticatedFetch(
-                `https://school-project-mes-contacts-backend.vercel.app/api/contacts/${id}`
+                `${import.meta.env.VITE_API_URL}/api/contacts/${id}`
             );
             //console.log(response);
 
@@ -63,7 +63,7 @@ export default function ContactsUpdatePage() {
             setLoading(true);
             //TODO: replace url by .env variable
             const response = await authenticatedFetch(
-                `https://school-project-mes-contacts-backend.vercel.app/api/contacts/${id}`,
+                `${import.meta.env.VITE_API_URL}/api/contacts/${id}`,
                 {
                     method: "PATCH",
                     body: JSON.stringify({
@@ -97,8 +97,9 @@ export default function ContactsUpdatePage() {
     return (
         <div>
             <h1>Contacts Update Page</h1>
+            <hr />
             <div>
-                <p>Your contact details will be displayed here</p>
+                <h3>Your contact details will be displayed here</h3>
                 <form onSubmit={handleSubmit}>
                     <table>
                         <thead>

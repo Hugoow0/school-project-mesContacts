@@ -16,7 +16,7 @@ export default function ContactsPage() {
             setLoading(true);
             //TODO: replace url by .env variable
             const response = await authenticatedFetch(
-                "https://school-project-mes-contacts-backend.vercel.app/api/contacts"
+                `${import.meta.env.VITE_API_URL}/api/contacts`
             );
             console.log(response);
 
@@ -52,7 +52,7 @@ export default function ContactsPage() {
             setLoading(true);
             //TODO: replace url by .env variable
             const response = await authenticatedFetch(
-                `https://school-project-mes-contacts-backend.vercel.app/api/contacts/${contactId}`,
+                `${import.meta.env.VITE_API_URL}/api/contacts/${contactId}`,
                 {
                     method: "DELETE",
                 }
@@ -96,7 +96,7 @@ export default function ContactsPage() {
         try {
             //TODO: replace url by .env variable
             const response = await authenticatedFetch(
-                "https://school-project-mes-contacts-backend.vercel.app/api/contacts/",
+                `${import.meta.env.VITE_API_URL}/api/contacts/`,
                 {
                     method: "POST",
                     body: JSON.stringify({
@@ -126,7 +126,8 @@ export default function ContactsPage() {
     return (
         <div>
             <h1>Contacts Page</h1>
-            <p>Your contacts will be displayed here</p>
+            <hr />
+            <h3>Your contacts will be displayed here</h3>
             <div>
                 <table>
                     <thead>
