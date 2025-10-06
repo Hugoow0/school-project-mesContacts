@@ -16,7 +16,7 @@ export default function RegisterPage() {
         const formData = new FormData(event.target);
 
         const data = Object.fromEntries(formData);
-        console.log("All form data:", data);
+        //console.log("All form data:", data);
         if (
             !String(data.username).trim().length ||
             !String(data.password).trim().length
@@ -26,7 +26,6 @@ export default function RegisterPage() {
             return;
         }
 
-        //TODO: replace url by .env variable
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/auth/register`,
@@ -43,7 +42,7 @@ export default function RegisterPage() {
             );
 
             const result = await response.json();
-            console.log("Response:", result);
+            //console.log("Response:", result);
 
             if (response.ok) {
                 alert("User successfully created");
@@ -53,7 +52,7 @@ export default function RegisterPage() {
                 throw new Error(result.error || "Registration failed");
             }
         } catch (error) {
-            console.error(error);
+            //console.error(error);
             alert(error);
         }
         setLoading(false);

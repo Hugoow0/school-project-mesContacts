@@ -12,7 +12,7 @@ export const isAuthenticated = () => {
         const currentTime = Date.now() / 1000;
         return payload.exp > currentTime;
     } catch (error) {
-        console.error("Invalid token format:", error);
+        //console.error("Invalid token format:", error);
         return false;
     }
 };
