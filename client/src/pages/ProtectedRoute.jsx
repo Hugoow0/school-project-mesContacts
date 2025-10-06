@@ -1,5 +1,5 @@
 import { Navigate, Link } from "react-router";
-import { isAuthenticated, removeAuthToken } from "../middlewares/middleware";
+import { isAuthenticated, logout } from "../services/auth";
 import { useNavigate } from "react-router";
 
 export default function ProtectedRoute({ children }) {
@@ -10,8 +10,7 @@ export default function ProtectedRoute({ children }) {
     }
 
     const handleLogout = () => {
-        removeAuthToken();
-        navigate("/auth/login");
+        logout();
     };
 
     return (

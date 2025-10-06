@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router";
-import { isAuthenticated } from "../middlewares/middleware";
+import { register, isAuthenticated } from "../services/auth";
 
 export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
@@ -11,52 +11,33 @@ export default function RegisterPage() {
     }
 
     async function handleSubmitRegisterForm(event) {
-        setLoading(true);
         event.preventDefault();
-        const formData = new FormData(event.target);
+        setLoading(true);
 
+        const formData = new FormData(event.target);
         const data = Object.fromEntries(formData);
-        //console.log("All form data:", data);
+
         if (
-            !String(data.username).trim().length ||
+            !String(data.email).trim().length ||
             !String(data.password).trim().length
         ) {
-            alert("Required fields must contains valid values");
+            alert("Required fields must contain valid values");
             setLoading(false);
             return;
         }
 
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/auth/register`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email: data.email,
-                        password: data.password,
-                    }),
-                }
-            );
-
-            const result = await response.json();
-            //console.log("Response:", result);
-
-            if (response.ok) {
-                alert("User successfully created");
-                setLoading(false);
-                navigate("/auth/login");
-            } else {
-                throw new Error(result.error || "Registration failed");
-            }
+            await register({
+                email: data.email,
+                password: data.password,
+            });
+            alert("User successfully created");
+            navigate("/auth/login");
         } catch (error) {
-            //console.error(error);
-            alert(error);
+            alert(`Registration failed: ${error.message}`);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-        return;
     }
 
     return (

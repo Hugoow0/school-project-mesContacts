@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { authenticatedFetch } from "../middlewares/middleware";
+import {
+    getAllContacts,
+    createContact,
+    updateContact,
+    deleteContact,
+} from "../services/contacts";
 
 export default function ContactsPage() {
     const [contactList, setContactList] = useState([]);
@@ -14,25 +19,12 @@ export default function ContactsPage() {
     const fetchContacts = async () => {
         try {
             setLoading(true);
-            const response = await authenticatedFetch(
-                `${import.meta.env.VITE_API_URL}/api/contacts`
-            );
-            //console.log(response);
-
-            if (response.ok) {
-                const data = await response.json();
-                //console.log(data);
-                if (data.length !== 0) {
-                    setContactList(data[0].contacts);
-                }
-            } else if (response.status === 403) {
-                throw new Error("403 Forbidden");
-            } else {
-                throw new Error("Failed to fetch contacts");
+            const data = await getAllContacts();
+            if (data.length !== 0) {
+                setContactList(data[0].contacts);
             }
         } catch (error) {
-            //console.error(error);
-            alert(error);
+            alert(error.message);
         } finally {
             setLoading(false);
         }
@@ -40,117 +32,26 @@ export default function ContactsPage() {
 
     async function handleUpdateBtn(contactId) {
         try {
-            setLoading(true);
             setUpdateForm(true);
-            const response = await authenticatedFetch(
-                `${import.meta.env.VITE_API_URL}/api/contacts/${contactId}`
+            const contact = contactList.find(
+                (contact) => contact._id === contactId
             );
-            //console.log(response);
-
-            if (response.ok) {
-                const data = await response.json();
-                //console.log(data);
-                if (data.length !== 0) {
-                    setContactToUpdate(data);
-                }
-            } else if (response.status === 403) {
-                throw new Error("403 Forbidden");
-            } else {
-                const data = await response.json();
-                throw new Error(
-                    `Failed to get contact details : ${data.error}`
-                );
+            if (contact) {
+                setContactToUpdate(contact);
             }
         } catch (error) {
-            //console.error(error);
-            alert(error);
-        } finally {
-            setLoading(false);
+            alert(error.message);
         }
-    }
-
-    async function handleSubmitUpdateContactForm(event) {
-        setLoading(true);
-        event.preventDefault();
-        const formData = new FormData(event.target);
-
-        const data = Object.fromEntries(formData);
-        //console.log("All form data:", data);
-
-        if (
-            !String(data.firstName).trim().length ||
-            !String(data.lastName).trim().length
-        ) {
-            alert("Required fields must contains valid values");
-            setLoading(false);
-            return;
-        }
-
-        try {
-            setLoading(true);
-            const response = await authenticatedFetch(
-                `${import.meta.env.VITE_API_URL}/api/contacts/${
-                    contactToUpdate?._id
-                }`,
-                {
-                    method: "PATCH",
-                    body: JSON.stringify({
-                        firstName: data.firstName,
-                        lastName: data.lastName,
-                        phone: data.phone,
-                    }),
-                }
-            );
-            //console.log(response);
-
-            if (response.ok) {
-                await fetchContacts();
-                setContactToUpdate({});
-                setUpdateForm(false);
-                alert("Contact details updated successfully");
-            } else if (response.status === 403) {
-                throw new Error("403 Forbidden");
-            } else {
-                const data = await response.json();
-                throw new Error(
-                    `Failed to update contact details : ${data.error}`
-                );
-            }
-        } catch (error) {
-            //console.error(error);
-            alert(error);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    function handleCancelBtnClick() {
-        setContactToUpdate({});
-        setUpdateForm(false);
     }
 
     async function handleDeleteBtn(contactId) {
         try {
             setLoading(true);
-            const response = await authenticatedFetch(
-                `${import.meta.env.VITE_API_URL}/api/contacts/${contactId}`,
-                {
-                    method: "DELETE",
-                }
-            );
-            //console.log(response);
-
-            if (response.ok) {
-                await fetchContacts();
-            } else if (response.status === 403) {
-                throw new Error("403 Forbidden");
-            } else {
-                const data = await response.json();
-                throw new Error(`Failed to DELETE contact : ${data.error}`);
-            }
+            await deleteContact(contactId);
+            await fetchContacts();
+            alert("Contact deleted successfully");
         } catch (error) {
-            //console.error(error);
-            alert(error);
+            alert(error.message);
         } finally {
             setLoading(false);
         }
@@ -160,47 +61,70 @@ export default function ContactsPage() {
         setLoading(true);
         event.preventDefault();
         const formData = new FormData(event.target);
-
         const data = Object.fromEntries(formData);
-        //console.log("All form data:", data);
 
         if (
             !String(data.firstName).trim().length ||
             !String(data.lastName).trim().length ||
             !String(data.phone).trim().length
         ) {
-            alert("Required fields must contains valid values");
+            alert("Required fields must contain valid values");
             setLoading(false);
             return;
         }
 
         try {
-            const response = await authenticatedFetch(
-                `${import.meta.env.VITE_API_URL}/api/contacts/`,
-                {
-                    method: "POST",
-                    body: JSON.stringify({
-                        firstName: data.firstName,
-                        lastName: data.lastName,
-                        phone: data.phone,
-                    }),
-                }
-            );
-            //console.log(response);
-
-            if (response.ok) {
-                await fetchContacts();
-                alert("Contact added successfully");
-            } else {
-                const data = await response.json();
-                throw new Error(`Failed to add contact : ${data.error}`);
-            }
+            await createContact({
+                firstName: data.firstName,
+                lastName: data.lastName,
+                phone: data.phone,
+            });
+            await fetchContacts();
+            alert("Contact created successfully");
+            event.target.reset();
         } catch (error) {
-            //console.error(error);
-            alert(error);
+            alert(error.message);
         } finally {
             setLoading(false);
         }
+    }
+
+    async function handleSubmitUpdateContactForm(event) {
+        setLoading(true);
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const data = Object.fromEntries(formData);
+
+        if (
+            !String(data.firstName).trim().length ||
+            !String(data.lastName).trim().length ||
+            !String(data.phone).trim().length
+        ) {
+            alert("Required fields must contain valid values");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            await updateContact(contactToUpdate._id, {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                phone: data.phone,
+            });
+            await fetchContacts();
+            alert("Contact updated successfully");
+            setUpdateForm(false);
+            setContactToUpdate({});
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    function handleCancelBtnClick() {
+        setUpdateForm(false);
+        setContactToUpdate({});
     }
 
     return (
