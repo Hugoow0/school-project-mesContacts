@@ -7,7 +7,9 @@
     "type": "commonjs",
     "main": "server.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "jest",
+        "start": "npm run start",
+        "build": "npm run build"
     },
     "dependencies": {
         "bcrypt": "^6.0.0",
@@ -18,5 +20,10 @@
         "mongodb": "^6.19.0",
         "mongoose": "^8.18.1",
         "swagger-ui-express": "^5.0.1"
+    },
+    "devDependencies": {
+        "@types/jest": "^30.0.0",
+        "jest": "^30.2.0",
+        "supertest": "^7.1.4"
     }
 }
