@@ -5,7 +5,13 @@
         "version": "1.0.0",
         "description": "API for managing contacts with user authentication"
     },
-    "servers": [{ "url": "http://localhost:5000" }],
+    "servers": [
+        { "url": "http://localhost:5000", "description": "Development server" },
+        {
+            "url": "https://efrei-project-mes-contacts-backend.vercel.app/",
+            "description": "Production server"
+        }
+    ],
     "paths": {
         "/api": {
             "get": {

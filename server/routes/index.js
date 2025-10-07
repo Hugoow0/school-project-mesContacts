@@ -17,10 +17,30 @@ router.use("/auth", authRoutes);
 router.use("/contacts", contactsRoutes);
 
 // Swagger documentation
-router.use(
-    "/api-docs",
-    swaggerUi.serve,
-    swaggerUi.setup(require("../docs/openapi/openapi.json"))
-);
+const swaggerDocument = require("../docs/openapi/openapi.json");
+
+// Swagger configuration options
+const swaggerOptions = {
+    explorer: true,
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "MesContacts API Documentation",
+    swaggerOptions: {
+        url: null, // Disable the default URL
+        spec: swaggerDocument,
+    },
+};
+
+// Serve Swagger UI
+router.get("/docs", (req, res, next) => {
+    // Force reload the swagger document for each request
+    delete require.cache[require.resolve("../docs/openapi/openapi.json")];
+    const freshSwaggerDoc = require("../docs/openapi/openapi.json");
+
+    // Setup swagger with the fresh document
+    const swaggerSetup = swaggerUi.setup(freshSwaggerDoc, swaggerOptions);
+    swaggerSetup(req, res, next);
+});
+
+router.use("/docs", swaggerUi.serve);
 
 module.exports = router;
