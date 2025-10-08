@@ -8,7 +8,7 @@
     "servers": [
         { "url": "http://localhost:5000", "description": "Development server" },
         {
-            "url": "https://efrei-project-mes-contacts-backend.vercel.app/",
+            "url": "https://efrei-project-mescontacts-backend.onrender.com",
             "description": "Production server"
         }
     ],
